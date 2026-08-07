@@ -1,8 +1,0 @@
-├── api/
-│   └── index.js
-├── public/
-│   └── index.html   <-- O arquivo HTML DEVE estar dentro de 'public'
-├── prisma/
-│   └── schema.prisma
-├── package.json
-└── vercel.json
