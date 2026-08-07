@@ -53,7 +53,7 @@
           <i class="fa-solid fa-chart-pie w-5"></i> Relatórios
         </button>
         <button onclick="mudarAba('config')" id="nav-config" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-slate-400 hover:bg-slate-800 hover:text-white">
-          <i class="fa-solid fa-image w-5"></i> Logo / Foto do App
+          <i class="fa-solid fa-image w-5"></i> Logo do App
         </button>
       </nav>
     </div>
@@ -213,11 +213,11 @@
           <div class="lg:col-span-4 flex items-center gap-6 bg-slate-50 p-3 rounded-xl border border-slate-200">
             <span class="text-xs font-bold text-slate-700">Refeições Padrão:</span>
             <label class="flex items-center gap-2 text-xs text-slate-700 cursor-pointer"><input type="checkbox" id="cad-cafe"> Café da Manhã</label>
-            <label class="flex items-center gap-2 text-xs text-slate-700 cursor-pointer"><input type="checkbox" id="cad-almoco"> Almoço</label>
+            <label class="flex items-center gap-2 text-xs text-slate-700 cursor-pointer"><input type="checkbox" id="cad-almoco" checked> Almoço</label>
           </div>
 
           <button type="submit" class="lg:col-span-4 bg-slate-900 text-white p-3 rounded-xl font-bold text-xs hover:bg-slate-800 cursor-pointer">
-            Salvar no Banco de Dados
+            Salvar no Supabase
           </button>
         </form>
       </div>
@@ -290,7 +290,7 @@
   </main>
 
   <script>
-    // ⚠️ SUBSTITUA PELAS SUAS CREDENCIAIS DO SUPABASE
+    // ⚠️ INSIRA AS SUAS CREDENCIAIS DO SUPABASE AQUI
     const SUPABASE_URL = 'https://SEU_PROJETO.supabase.co';
     const SUPABASE_ANON_KEY = 'SUA_CHAVE_ANON_AQUI';
 
@@ -367,7 +367,6 @@
       }
     }
 
-    // --- FUNÇÃO DE CADASTRO SOLICITADA ---
     async function cadastrarAluno(e) {
       e.preventDefault();
       const nomeLimpo = document.getElementById('cad-nome').value.trim();
