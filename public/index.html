@@ -423,7 +423,8 @@
           document.getElementById('cad-qrcode-status').classList.add('hidden');
           await carregarAlunos();
         } else {
-          alert(data.error || data.mensagem || 'Erro ao cadastrar aluno.');
+          const detalhe = data.detalhe ? `\n\nDetalhe técnico: ${data.detalhe}` : '';
+          alert((data.error || data.mensagem || 'Erro ao cadastrar aluno.') + detalhe);
         }
       } catch (err) {
         console.error('Erro detalhado:', err);
