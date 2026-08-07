@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "api/index.js",
   "scripts": {
-    "start": "node api/index.js",
-    "build": "prisma generate"
+    "build": "prisma generate",
+    "start": "node api/index.js"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
