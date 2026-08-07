@@ -290,9 +290,9 @@
   </main>
 
   <script>
-    // ⚠️ COLE AQUI SUAS CREDENCIAIS DO SUPABASE (Passo 2 abaixo)
-    const SUPABASE_URL = 'https://zfxeyocrmdxtdwnvxheb.supabase.co/rest/v1/';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpmeGV5b2NybWR4dGR3bnZ4aGViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxMzE4NjIsImV4cCI6MjEwMTcwNzg2Mn0.2fpKLQLlay77bCfLL9k0YvXk_w_AbZCleUTwF3wtgX0';
+    // ⚠️ SUBSTITUA PELAS SUAS CREDENCIAIS DO SUPABASE
+    const SUPABASE_URL = 'https://SEU_PROJETO.supabase.co';
+    const SUPABASE_ANON_KEY = 'SUA_CHAVE_ANON_AQUI';
 
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -367,6 +367,7 @@
       }
     }
 
+    // --- FUNÇÃO DE CADASTRO SOLICITADA ---
     async function cadastrarAluno(e) {
       e.preventDefault();
       const nomeLimpo = document.getElementById('cad-nome').value.trim();
@@ -377,7 +378,7 @@
         return alert("Preencha Nome, Turma e QR Code.");
       }
 
-      const { error } = await _supabase.from('alunos').insert([{
+      const { data, error } = await _supabase.from('alunos').insert([{
         nome: nomeLimpo,
         turma: turmaLimpa,
         fone: document.getElementById('cad-telefone')?.value.trim() || '',
@@ -386,13 +387,14 @@
         almoco: document.getElementById('cad-almoco').checked
       }]);
 
-      if (!error) {
+      if (error) {
+        console.error("Erro no Supabase:", error);
+        alert('Erro ao cadastrar: ' + (error.message || JSON.stringify(error)));
+      } else {
         alert('Aluno cadastrado com sucesso!');
         document.getElementById('form-aluno').reset();
         document.getElementById('cad-qrcode-status').classList.add('hidden');
         await carregarAlunos();
-      } else {
-        alert('Erro ao cadastrar: ' + (error.code === '23505' ? 'QR Code já cadastrado!' : error.message));
       }
     }
 
