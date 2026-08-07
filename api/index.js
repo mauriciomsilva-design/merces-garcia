@@ -1,111 +1,91 @@
 const express = require('express');
-const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
 
 const app = express();
 const prisma = new PrismaClient();
 
-app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json());
 
-// --- ALUNOS ---
+// 1. Rota para buscar todos os alunos (resolve o "Carregando Alunos...")
 app.get('/api/alunos', async (req, res) => {
   try {
-    const alunos = await prisma.aluno.findMany({ orderBy: { nome: 'asc' } });
-    res.json(alunos);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const alunos = await prisma.aluno.findMany({
+      orderBy: { nome: 'asc' }
+    });
+    return res.status(200).json(alunos);
+  } catch (error) {
+    console.error('Erro ao buscar alunos:', error);
+    return res.status(500).json({ error: 'Erro ao buscar alunos do banco' });
   }
 });
 
+// 2. Rota para cadastrar novo aluno
 app.post('/api/alunos', async (req, res) => {
+  const { nome, turma, fone, qrcode, cafe, almoco } = req.body;
+
+  if (!nome || !qrcode) {
+    return res.status(400).json({ error: 'Nome e QR Code são obrigatórios.' });
+  }
+
   try {
-    const { nome, turma, fone, qrcode, cafe, almoco } = req.body;
-    const novo = await prisma.aluno.create({
-      data: { nome, turma, fone, qrcode, cafe: !!cafe, almoco: !!almoco }
+    const novoAluno = await prisma.aluno.create({
+      data: {
+        nome,
+        turma: turma || '',
+        fone: fone || '',
+        qrcode: String(qrcode).trim(),
+        cafe: Boolean(cafe),
+        almoco: Boolean(almoco)
+      }
     });
-    res.json(novo);
-  } catch (err) {
-    res.status(400).json({ error: 'QR Code duplicado ou dados inválidos.' });
-  }
-});
-
-app.delete('/api/alunos/:id', async (req, res) => {
-  try {
-    await prisma.aluno.delete({ where: { id: req.params.id } });
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// --- HISTÓRICO ---
-app.get('/api/historico', async (req, res) => {
-  try {
-    const historico = await prisma.historico.findMany({ orderBy: { criadoEm: 'desc' } });
-    res.json(historico);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.post('/api/historico', async (req, res) => {
-  try {
-    const { alunoId, nome, turma, fone, qrcode, cafe, almoco } = req.body;
-    const agora = new Date();
-    const dataStr = agora.toLocaleDateString('pt-BR');
-    const horaStr = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-
-    const existente = await prisma.historico.findFirst({
-      where: { data: dataStr, qrcode: qrcode }
-    });
-
-    let registro;
-    if (existente) {
-      registro = await prisma.historico.update({
-        where: { id: existente.id },
-        data: { cafe: !!cafe, almoco: !!almoco }
-      });
-    } else {
-      registro = await prisma.historico.create({
-        data: {
-          alunoId: alunoId || null,
-          nome, turma, fone, qrcode,
-          data: dataStr,
-          hora: horaStr,
-          cafe: !!cafe,
-          almoco: !!almoco
-        }
-      });
+    return res.status(201).json(novoAluno);
+  } catch (error) {
+    console.error('Erro ao cadastrar aluno:', error);
+    // Código P2002 indica duplicidade de campo único (qrcode)
+    if (error.code === 'P2002') {
+      return res.status(400).json({ error: 'Erro ao cadastrar. Verifique se o QR Code já existe.' });
     }
-    res.json(registro);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: 'Erro interno ao salvar no banco.' });
   }
 });
 
-// --- CONFIGURAÇÃO (FOTO DO APP) ---
-app.get('/api/config/foto', async (req, res) => {
-  try {
-    const config = await prisma.config.findUnique({ where: { chave: 'foto_app' } });
-    res.json({ foto: config ? config.valor : '' });
-  } catch (err) {
-    res.json({ foto: '' });
-  }
-});
+// 3. Rota para registrar presença/refeição via QR Code
+app.post('/api/presenca', async (req, res) => {
+  const { qrcode, cafe, almoco } = req.body;
 
-app.post('/api/config/foto', async (req, res) => {
   try {
-    const { foto } = req.body;
-    await prisma.config.upsert({
-      where: { chave: 'foto_app' },
-      update: { valor: foto },
-      create: { chave: 'foto_app', valor: foto }
+    const aluno = await prisma.aluno.findUnique({
+      where: { qrcode: String(qrcode).trim() }
     });
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+
+    if (!aluno) {
+      return res.status(404).json({ error: 'Aluno não encontrado com este QR Code.' });
+    }
+
+    const agora = new Date();
+    const dataAtual = agora.toLocaleDateString('pt-BR');
+    const horaAtual = agora.toLocaleTimeString('pt-BR');
+
+    const historico = await prisma.historico.create({
+      data: {
+        alunoId: aluno.id,
+        nome: aluno.nome,
+        turma: aluno.turma,
+        fone: aluno.fone,
+        qrcode: aluno.qrcode,
+        data: dataAtual,
+        hora: horaAtual,
+        cafe: Boolean(cafe),
+        almoco: Boolean(almoco)
+      }
+    });
+
+    return res.status(200).json({ mensagem: 'Presença registrada!', historico, aluno });
+  } catch (error) {
+    console.error('Erro ao registrar presença:', error);
+    return res.status(500).json({ error: 'Erro ao processar leitura do QR Code.' });
   }
 });
 
+// Exporta o app para a Vercel Serverless Function
 module.exports = app;
