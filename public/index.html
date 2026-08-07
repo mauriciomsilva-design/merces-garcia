@@ -196,8 +196,31 @@
           <input type="text" id="cad-nome" placeholder="Nome Completo" required class="p-3 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500">
           <input type="text" id="cad-turma" placeholder="Turma (Ex: 3º MSI)" required class="p-3 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500">
           <input type="text" id="cad-telefone" placeholder="WhatsApp (Ex: 61999998888)" class="p-3 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500">
-          <input type="text" id="cad-qrcode" placeholder="Código QR Único" required class="p-3 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500">
 
+          <div class="flex gap-2">
+            <input type="text" id="cad-qrcode" placeholder="QR da carteirinha" required
+              class="flex-1 p-3 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500">
+            <button type="button" onclick="lerQRCodeCadastro()"
+              class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 rounded-xl text-xs"
+              title="Ler QR Code da carteirinha">
+              <i class="fa-solid fa-camera"></i> Ler
+            </button>
+          </div>
+
+          <div id="cad-qrcode-status" class="lg:col-span-4 hidden p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">
+            <i class="fa-solid fa-circle-check mr-1"></i>
+            QR Code lido. Agora salve o aluno.
+          </div>
+
+          <div id="cad-qrcode-reader-box" class="lg:col-span-4 hidden">
+            <div class="max-w-sm mx-auto bg-slate-950 rounded-2xl p-2 border-2 border-slate-900">
+              <div id="cad-qrcode-reader" class="w-full"></div>
+            </div>
+            <button type="button" onclick="fecharLeitorCadastro()"
+              class="mt-2 w-full bg-slate-200 hover:bg-slate-300 text-slate-800 py-2 rounded-xl text-xs font-bold">
+              Fechar câmera
+            </button>
+          </div>
           <div class="lg:col-span-4 flex items-center gap-6 bg-slate-50 p-3 rounded-xl border border-slate-200">
             <span class="text-xs font-bold text-slate-700">Refeições Padrão:</span>
             <label class="flex items-center gap-2 text-xs text-slate-700 cursor-pointer"><input type="checkbox" id="cad-cafe"> Café da Manhã</label>
@@ -364,19 +387,22 @@
 
     async function cadastrarAluno(e) {
       e.preventDefault();
-      
-      const qrcodeLimpo = document.getElementById('cad-qrcode').value.trim();
-      const nomeLimpo = document.getElementById('cad-nome').value.trim();
 
-      if (!qrcodeLimpo || !nomeLimpo) {
-        alert("Preencha o Nome e o QR Code do aluno.");
+      const nomeLimpo = document.getElementById('cad-nome').value.trim();
+      const turmaLimpa = document.getElementById('cad-turma').value.trim();
+      const qrcodeLimpo = document.getElementById('cad-qrcode').value.trim();
+
+      if (!nomeLimpo || !turmaLimpa || !qrcodeLimpo) {
+        alert("Preencha Nome, Turma e leia/informe o QR Code da carteirinha.");
         return;
       }
 
       const body = {
         nome: nomeLimpo,
-        turma: document.getElementById('cad-turma').value.trim(),
-        fone: document.getElementById('cad-telefone') ? document.getElementById('cad-telefone').value.trim() : '',
+        turma: turmaLimpa,
+        fone: document.getElementById('cad-telefone')
+          ? document.getElementById('cad-telefone').value.trim()
+          : '',
         qrcode: qrcodeLimpo,
         cafe: document.getElementById('cad-cafe').checked,
         almoco: document.getElementById('cad-almoco').checked
@@ -389,19 +415,69 @@
           body: JSON.stringify(body)
         });
 
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
 
         if (res.ok) {
-          alert('Aluno gravado no banco com sucesso!');
+          alert('Aluno e QR Code da carteirinha cadastrados com sucesso!');
           document.getElementById('form-aluno').reset();
+          document.getElementById('cad-qrcode-status').classList.add('hidden');
           await carregarAlunos();
         } else {
           alert(data.error || data.mensagem || 'Erro ao cadastrar aluno.');
         }
       } catch (err) {
         console.error('Erro detalhado:', err);
-        alert(`Erro de conexão com o banco ou servidor (${API_BASE_URL}). Verifique a Vercel.`);
+        alert(`Erro de conexão com a API (${API_BASE_URL}). Verifique a Vercel e o Neon.`);
       }
+    }
+
+    let html5QrCadastro = null;
+
+    async function lerQRCodeCadastro() {
+      const box = document.getElementById('cad-qrcode-reader-box');
+      box.classList.remove('hidden');
+
+      try {
+        if (!html5QrCadastro) {
+          html5QrCadastro = new Html5Qrcode("cad-qrcode-reader");
+        }
+
+        await html5QrCadastro.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 220, height: 220 } },
+          (codigo) => {
+            const valor = String(codigo || '').trim();
+
+            if (!valor) return;
+
+            document.getElementById('cad-qrcode').value = valor;
+            document.getElementById('cad-qrcode-status').classList.remove('hidden');
+
+            fecharLeitorCadastro();
+            alert('QR Code da carteirinha lido com sucesso!');
+          },
+          () => {}
+        );
+      } catch (erro) {
+        console.error('Erro ao abrir câmera:', erro);
+        alert('Não foi possível abrir a câmera. Verifique a permissão da câmera no navegador.');
+      }
+    }
+
+    async function fecharLeitorCadastro() {
+      if (html5QrCadastro) {
+        try {
+          if (html5QrCadastro.isScanning) {
+            await html5QrCadastro.stop();
+          }
+          await html5QrCadastro.clear();
+        } catch (e) {
+          console.warn('Não foi possível encerrar o leitor de cadastro:', e);
+        }
+        html5QrCadastro = null;
+      }
+
+      document.getElementById('cad-qrcode-reader-box').classList.add('hidden');
     }
 
     async function excluirAluno(id) {
@@ -530,6 +606,8 @@
       if (aba === 'scanner') iniciarCamera();
       else sePararCamera();
 
+      if (aba !== 'alunos') fecharLeitorCadastro();
+
       if (aba === 'relatorios') gerarRelatorio();
     }
 
@@ -553,7 +631,10 @@
     }
 
     function processarQRCode(codigo) {
-      const aluno = alunos.find(a => a.qrcode.toLowerCase() === codigo.trim().toLowerCase());
+      const codigoLido = String(codigo || '').trim().toLowerCase();
+      const aluno = alunos.find(a =>
+        String(a.qrcode || '').trim().toLowerCase() === codigoLido
+      );
       if (!aluno) {
         alert('Aluno não encontrado com este QR Code no banco!');
         if (html5QrCode) html5QrCode.resume();

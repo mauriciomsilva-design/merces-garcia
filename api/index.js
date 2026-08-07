@@ -1,87 +1,99 @@
 const express = require('express');
-const { PrismaClient } = require('@prisma/client');
+const cors = require('cors');
+const { Pool } = require('pg');
 
 const app = express();
-const prisma = new PrismaClient();
 
+app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// Middleware para permitir requisições no Vercel (CORS)
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  if (req.method === 'OPTIONS') return res.sendStatus(200);
-  next();
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
 });
 
-// Normalização do caminho da URL vinda da Vercel
-app.use((req, res, next) => {
-  if (req.url.startsWith('/api')) {
-    req.url = req.url.replace('/api', '');
-  }
-  if (req.url === '') req.url = '/';
-  next();
-});
-
-// POST /api/alunos -> Cadastrar
-app.post('/alunos', async (req, res) => {
+app.get('/api/alunos', async (req, res) => {
   try {
-    const { nome, turma, fone, qrcode, cafe, almoco } = req.body;
+    const result = await pool.query('SELECT * FROM alunos ORDER BY nome ASC');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao buscar alunos' });
+  }
+});
 
-    if (!nome || !qrcode) {
-      return res.status(400).json({ error: 'Nome e QR Code são obrigatórios.' });
+app.post('/api/alunos', async (req, res) => {
+  const { nome, turma, fone, qrcode, cafe, almoco } = req.body;
+  try {
+    const result = await pool.query(
+      'INSERT INTO alunos (nome, turma, fone, qrcode, cafe, almoco) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [nome, turma, fone, qrcode, cafe, almoco]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    res.status(400).json({ error: 'QR Code já cadastrado ou dados inválidos' });
+  }
+});
+
+app.delete('/api/alunos/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await pool.query('DELETE FROM alunos WHERE id = $1', [id]);
+    res.json({ mensagem: 'Aluno removido com sucesso' });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao deletar aluno' });
+  }
+});
+
+app.post('/api/presenca', async (req, res) => {
+  const { qrcode, cafe, almoco } = req.body;
+  try {
+    const alunoRes = await pool.query('SELECT * FROM alunos WHERE qrcode = $1', [qrcode]);
+    if (alunoRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Aluno não localizado' });
     }
+    const aluno = alunoRes.rows[0];
 
-    const qrcodeLimpo = String(qrcode).trim().toLowerCase();
+    const presencaRes = await pool.query(
+      'INSERT INTO presenca (aluno_id, qrcode, cafe, almoco) VALUES ($1, $2, $3, $4) RETURNING *',
+      [aluno.id, qrcode, cafe, almoco]
+    );
 
-    // Verifica se o QR Code já existe no banco
-    const existente = await prisma.aluno.findFirst({
-      where: { qrcode: qrcodeLimpo }
-    });
-
-    if (existente) {
-      return res.status(400).json({ error: `O QR Code "${qrcode}" já está cadastrado para o aluno ${existente.nome}.` });
-    }
-
-    const novo = await prisma.aluno.create({
-      data: {
-        nome,
-        turma: turma || '',
-        fone: fone || '',
-        qrcode: qrcodeLimpo,
-        cafe: Boolean(cafe),
-        almoco: Boolean(almoco)
+    res.json({
+      mensagem: 'Entrada registrada com sucesso',
+      historico: {
+        ...presencaRes.rows[0],
+        nome: aluno.nome,
+        turma: aluno.turma,
+        data: new Date().toLocaleDateString('pt-BR'),
+        hora: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
       }
     });
-
-    return res.status(201).json(novo);
   } catch (err) {
-    console.error("Erro interno no banco:", err);
-    return res.status(500).json({ error: `Erro no Servidor/Banco: ${err.message}` });
+    res.status(500).json({ error: 'Erro ao registrar presença' });
   }
 });
 
-// GET /api/alunos -> Listar todos
-app.get('/alunos', async (req, res) => {
+app.get('/api/config/foto', async (req, res) => {
   try {
-    const lista = await prisma.aluno.findMany({
-      orderBy: { id: 'desc' }
-    });
-    return res.json(lista);
+    const result = await pool.query("SELECT valor FROM configuracao WHERE chave = 'foto_logo'");
+    res.json({ foto: result.rows[0]?.valor || null });
   } catch (err) {
-    return res.status(500).json({ error: `Erro ao buscar alunos: ${err.message}` });
+    res.status(500).json({ error: 'Erro ao buscar foto' });
   }
 });
 
-// DELETE /api/alunos/:id
-app.delete('/alunos/:id', async (req, res) => {
+app.post('/api/config/foto', async (req, res) => {
+  const { foto } = req.body;
   try {
-    await prisma.aluno.delete({ where: { id: req.params.id } });
-    return res.json({ status: 'excluido' });
+    await pool.query(
+      "INSERT INTO configuracao (chave, valor) VALUES ('foto_logo', $1) ON CONFLICT (chave) DO UPDATE SET valor = $1",
+      [foto]
+    );
+    res.json({ mensagem: 'Foto salva com sucesso' });
   } catch (err) {
-    return res.status(500).json({ error: 'Erro ao excluir aluno.' });
+    res.status(500).json({ error: 'Erro ao salvar foto' });
   }
 });
 
+// Importante para Vercel Serverless
 module.exports = app;
