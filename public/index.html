@@ -5,18 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Mercês Garcia — Controle de Entrada e Merenda</title>
   <meta name="theme-color" content="#1e293b" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Mercês Garcia" />
   
-  <link id="app-favicon" rel="icon" href="" type="image/png" />
-  <link id="app-apple-icon" rel="apple-touch-icon" href="" />
-  <link id="app-manifest" rel="manifest" href="" />
-
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <!-- SDK Oficial do Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
   <style>
@@ -80,7 +74,7 @@
       </div>
 
       <span id="badge-status" class="px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1.5">
-        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Banco Neon Conectado
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Supabase Conectado
       </span>
     </header>
 
@@ -198,26 +192,21 @@
           <input type="text" id="cad-telefone" placeholder="WhatsApp (Ex: 61999998888)" class="p-3 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500">
 
           <div class="flex gap-2">
-            <input type="text" id="cad-qrcode" placeholder="QR da carteirinha" required
-              class="flex-1 p-3 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500">
-            <button type="button" onclick="lerQRCodeCadastro()"
-              class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 rounded-xl text-xs"
-              title="Ler QR Code da carteirinha">
+            <input type="text" id="cad-qrcode" placeholder="QR da carteirinha" required class="flex-1 p-3 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500">
+            <button type="button" onclick="lerQRCodeCadastro()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 rounded-xl text-xs" title="Ler QR Code da carteirinha">
               <i class="fa-solid fa-camera"></i> Ler
             </button>
           </div>
 
           <div id="cad-qrcode-status" class="lg:col-span-4 hidden p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">
-            <i class="fa-solid fa-circle-check mr-1"></i>
-            QR Code lido. Agora salve o aluno.
+            <i class="fa-solid fa-circle-check mr-1"></i> QR Code lido. Agora salve o aluno.
           </div>
 
           <div id="cad-qrcode-reader-box" class="lg:col-span-4 hidden">
             <div class="max-w-sm mx-auto bg-slate-950 rounded-2xl p-2 border-2 border-slate-900">
               <div id="cad-qrcode-reader" class="w-full"></div>
             </div>
-            <button type="button" onclick="fecharLeitorCadastro()"
-              class="mt-2 w-full bg-slate-200 hover:bg-slate-300 text-slate-800 py-2 rounded-xl text-xs font-bold">
+            <button type="button" onclick="fecharLeitorCadastro()" class="mt-2 w-full bg-slate-200 hover:bg-slate-300 text-slate-800 py-2 rounded-xl text-xs font-bold">
               Fechar câmera
             </button>
           </div>
@@ -257,9 +246,7 @@
     <!-- ABA 4: RELATÓRIOS -->
     <section id="aba-relatorios" class="hidden space-y-6">
       <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex justify-between items-center">
-        <div>
-          <h3 class="font-bold text-base text-slate-800">Relatório Geral de Refeições</h3>
-        </div>
+        <h3 class="font-bold text-base text-slate-800">Relatório Geral de Refeições</h3>
         <button onclick="exportarCSV()" class="bg-emerald-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs hover:bg-emerald-700 cursor-pointer">
           <i class="fa-solid fa-file-excel mr-1"></i> Exportar CSV (Excel)
         </button>
@@ -303,11 +290,11 @@
   </main>
 
   <script>
-    // Se a aplicação estiver publicada na Vercel, usa a própria URL do domínio publicado.
-    // Se estiver em arquivo local file://, tenta apontar para o servidor backend local.
-    const API_BASE_URL = window.location.protocol.startsWith('http')
-      ? window.location.origin 
-      : 'http://localhost:3000';
+    // ⚠️ COLE AQUI SUAS CREDENCIAIS DO SUPABASE (Passo 2 abaixo)
+    const SUPABASE_URL = 'https://zfxeyocrmdxtdwnvxheb.supabase.co/rest/v1/';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpmeGV5b2NybWR4dGR3bnZ4aGViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxMzE4NjIsImV4cCI6MjEwMTcwNzg2Mn0.2fpKLQLlay77bCfLL9k0YvXk_w_AbZCleUTwF3wtgX0';
+
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let alunos = [];
     let historico = [];
@@ -324,31 +311,30 @@
 
     async function carregarTudo() {
       await carregarAlunos();
+      await carregarHistorico();
       await carregarFotoApp();
       atualizarDashboard();
     }
 
     async function carregarAlunos() {
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/alunos`);
-        if (res.ok) {
-          alunos = await res.json();
-          atualizarTabelaAlunos();
-          atualizarSelectAlunosPainel();
-        }
-      } catch (e) {
-        console.error("Erro ao carregar alunos:", e);
+      const { data, error } = await _supabase.from('alunos').select('*').order('nome', { ascending: true });
+      if (!error && data) {
+        alunos = data;
+        atualizarTabelaAlunos();
+        atualizarSelectAlunosPainel();
+      }
+    }
+
+    async function carregarHistorico() {
+      const { data, error } = await _supabase.from('presenca').select('*').order('created_at', { ascending: false });
+      if (!error && data) {
+        historico = data;
       }
     }
 
     async function carregarFotoApp() {
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/config/foto`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.foto) aplicarFotoApp(data.foto);
-        }
-      } catch (e) {}
+      const { data } = await _supabase.from('configuracao').select('valor').eq('chave', 'foto_logo').single();
+      if (data && data.valor) aplicarFotoApp(data.valor);
     }
 
     function aplicarFotoApp(foto) {
@@ -369,16 +355,12 @@
         const reader = new FileReader();
         reader.onload = async function(evt) {
           const base64 = evt.target.result;
-          try {
-            await fetch(`${API_BASE_URL}/api/config/foto`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ foto: base64 })
-            });
+          const { error } = await _supabase.from('configuracao').upsert({ chave: 'foto_logo', valor: base64 });
+          if (!error) {
             aplicarFotoApp(base64);
             alert('Foto atualizada com sucesso!');
-          } catch (err) {
-            alert('Erro ao salvar a foto no servidor.');
+          } else {
+            alert('Erro ao salvar foto.');
           }
         };
         reader.readAsDataURL(file);
@@ -387,114 +369,72 @@
 
     async function cadastrarAluno(e) {
       e.preventDefault();
-
       const nomeLimpo = document.getElementById('cad-nome').value.trim();
       const turmaLimpa = document.getElementById('cad-turma').value.trim();
       const qrcodeLimpo = document.getElementById('cad-qrcode').value.trim();
 
       if (!nomeLimpo || !turmaLimpa || !qrcodeLimpo) {
-        alert("Preencha Nome, Turma e leia/informe o QR Code da carteirinha.");
-        return;
+        return alert("Preencha Nome, Turma e QR Code.");
       }
 
-      const body = {
+      const { error } = await _supabase.from('alunos').insert([{
         nome: nomeLimpo,
         turma: turmaLimpa,
-        fone: document.getElementById('cad-telefone')
-          ? document.getElementById('cad-telefone').value.trim()
-          : '',
+        fone: document.getElementById('cad-telefone')?.value.trim() || '',
         qrcode: qrcodeLimpo,
         cafe: document.getElementById('cad-cafe').checked,
         almoco: document.getElementById('cad-almoco').checked
-      };
+      }]);
 
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/alunos`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
-
-        const data = await res.json().catch(() => ({}));
-
-        if (res.ok) {
-          alert('Aluno e QR Code da carteirinha cadastrados com sucesso!');
-          document.getElementById('form-aluno').reset();
-          document.getElementById('cad-qrcode-status').classList.add('hidden');
-          await carregarAlunos();
-        } else {
-          const detalhe = data.detalhe ? `\n\nDetalhe técnico: ${data.detalhe}` : '';
-          alert((data.error || data.mensagem || 'Erro ao cadastrar aluno.') + detalhe);
-        }
-      } catch (err) {
-        console.error('Erro detalhado:', err);
-        alert(`Erro de conexão com a API (${API_BASE_URL}). Verifique a Vercel e o Neon.`);
+      if (!error) {
+        alert('Aluno cadastrado com sucesso!');
+        document.getElementById('form-aluno').reset();
+        document.getElementById('cad-qrcode-status').classList.add('hidden');
+        await carregarAlunos();
+      } else {
+        alert('Erro ao cadastrar: ' + (error.code === '23505' ? 'QR Code já cadastrado!' : error.message));
       }
     }
 
     let html5QrCadastro = null;
 
     async function lerQRCodeCadastro() {
-      const box = document.getElementById('cad-qrcode-reader-box');
-      box.classList.remove('hidden');
-
+      document.getElementById('cad-qrcode-reader-box').classList.remove('hidden');
       try {
-        if (!html5QrCadastro) {
-          html5QrCadastro = new Html5Qrcode("cad-qrcode-reader");
-        }
-
+        if (!html5QrCadastro) html5QrCadastro = new Html5Qrcode("cad-qrcode-reader");
         await html5QrCadastro.start(
           { facingMode: "environment" },
           { fps: 10, qrbox: { width: 220, height: 220 } },
           (codigo) => {
-            const valor = String(codigo || '').trim();
-
-            if (!valor) return;
-
-            document.getElementById('cad-qrcode').value = valor;
+            document.getElementById('cad-qrcode').value = String(codigo || '').trim();
             document.getElementById('cad-qrcode-status').classList.remove('hidden');
-
             fecharLeitorCadastro();
-            alert('QR Code da carteirinha lido com sucesso!');
           },
           () => {}
         );
       } catch (erro) {
-        console.error('Erro ao abrir câmera:', erro);
-        alert('Não foi possível abrir a câmera. Verifique a permissão da câmera no navegador.');
+        alert('Não foi possível abrir a câmera.');
       }
     }
 
     async function fecharLeitorCadastro() {
       if (html5QrCadastro) {
-        try {
-          if (html5QrCadastro.isScanning) {
-            await html5QrCadastro.stop();
-          }
-          await html5QrCadastro.clear();
-        } catch (e) {
-          console.warn('Não foi possível encerrar o leitor de cadastro:', e);
-        }
+        try { if (html5QrCadastro.isScanning) await html5QrCadastro.stop(); await html5QrCadastro.clear(); } catch (e) {}
         html5QrCadastro = null;
       }
-
       document.getElementById('cad-qrcode-reader-box').classList.add('hidden');
     }
 
     async function excluirAluno(id) {
-      if (confirm('Deseja excluir este aluno do banco?')) {
-        try {
-          await fetch(`${API_BASE_URL}/api/alunos/${id}`, { method: 'DELETE' });
-          await carregarAlunos();
-        } catch (err) {
-          alert('Erro ao excluir aluno do banco.');
-        }
+      if (confirm('Deseja excluir este aluno?')) {
+        const { error } = await _supabase.from('alunos').delete().eq('id', id);
+        if (!error) await carregarAlunos();
       }
     }
 
     function atualizarTabelaAlunos() {
       const tbody = document.getElementById('tabela-alunos');
-      if (!Array.isArray(alunos) || alunos.length === 0) {
+      if (!alunos.length) {
         tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400">Nenhum aluno cadastrado.</td></tr>';
         return;
       }
@@ -515,14 +455,13 @@
 
     function atualizarSelectAlunosPainel() {
       const select = document.getElementById('painel-aluno-select');
-      if (!Array.isArray(alunos)) return;
       select.innerHTML = '<option value="">-- Selecione um Aluno --</option>' +
         alunos.map(a => `<option value="${a.id}">${a.nome} (${a.turma || 'Sem Turma'})</option>`).join('');
     }
 
     function carregarOpcoesAlunoPainel() {
       const id = document.getElementById('painel-aluno-select').value;
-      const a = alunos.find(x => x.id === id);
+      const a = alunos.find(x => String(x.id) === String(id));
       if (a) {
         document.getElementById('painel-cafe').checked = Boolean(a.cafe);
         document.getElementById('painel-almoco').checked = Boolean(a.almoco);
@@ -531,11 +470,13 @@
 
     async function confirmarEntradaPainel() {
       const id = document.getElementById('painel-aluno-select').value;
-      const aluno = alunos.find(a => a.id === id);
+      const aluno = alunos.find(a => String(a.id) === String(id));
       if (!aluno) return alert('Selecione um aluno');
 
       await salvarEntradaBanco({
         qrcode: aluno.qrcode,
+        nome: aluno.nome,
+        turma: aluno.turma,
         cafe: document.getElementById('painel-cafe').checked,
         almoco: document.getElementById('painel-almoco').checked
       });
@@ -544,25 +485,25 @@
     }
 
     async function salvarEntradaBanco(dados) {
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/presenca`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(dados)
-        });
+      const agora = new Date();
+      const registro = {
+        qrcode: dados.qrcode,
+        nome: dados.nome,
+        turma: dados.turma,
+        cafe: dados.cafe,
+        almoco: dados.almoco,
+        data: agora.toLocaleDateString('pt-BR'),
+        hora: agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      };
 
-        const resData = await res.json();
-        if (res.ok) {
-          alert('Entrada registrada com sucesso!');
-          if (resData.historico) {
-            historico.unshift(resData.historico);
-            atualizarDashboard();
-          }
-        } else {
-          alert(resData.error || 'Erro ao registrar entrada.');
-        }
-      } catch (err) {
-        alert('Erro ao conectar com o servidor.');
+      const { error } = await _supabase.from('presenca').insert([registro]);
+
+      if (!error) {
+        alert('Entrada registrada com sucesso!');
+        historico.unshift(registro);
+        atualizarDashboard();
+      } else {
+        alert('Erro ao registrar entrada.');
       }
     }
 
@@ -573,10 +514,10 @@
       document.getElementById('metric-hoje').innerText = hoje.length;
       document.getElementById('metric-cafe').innerText = hoje.filter(h => h.cafe).length;
       document.getElementById('metric-almoco').innerText = hoje.filter(h => h.almoco).length;
-      document.getElementById('metric-alunos').innerText = Array.isArray(alunos) ? alunos.length : 0;
+      document.getElementById('metric-alunos').innerText = alunos.length;
 
       const container = document.getElementById('lista-recentes');
-      if (hoje.length === 0) {
+      if (!hoje.length) {
         container.innerHTML = '<div class="p-4 text-center text-xs text-slate-400">Nenhum registro hoje.</div>';
         return;
       }
@@ -608,7 +549,6 @@
       else sePararCamera();
 
       if (aba !== 'alunos') fecharLeitorCadastro();
-
       if (aba === 'relatorios') gerarRelatorio();
     }
 
@@ -633,11 +573,9 @@
 
     function processarQRCode(codigo) {
       const codigoLido = String(codigo || '').trim().toLowerCase();
-      const aluno = alunos.find(a =>
-        String(a.qrcode || '').trim().toLowerCase() === codigoLido
-      );
+      const aluno = alunos.find(a => String(a.qrcode || '').trim().toLowerCase() === codigoLido);
       if (!aluno) {
-        alert('Aluno não encontrado com este QR Code no banco!');
+        alert('Aluno não encontrado com este QR Code!');
         if (html5QrCode) html5QrCode.resume();
         return;
       }
@@ -654,6 +592,8 @@
       if (!alunoEmProcessamento) return;
       await salvarEntradaBanco({
         qrcode: alunoEmProcessamento.qrcode,
+        nome: alunoEmProcessamento.nome,
+        turma: alunoEmProcessamento.turma,
         cafe: document.getElementById('presenca-cafe').checked,
         almoco: document.getElementById('presenca-almoco').checked
       });
@@ -664,7 +604,7 @@
 
     function gerarRelatorio() {
       const tbody = document.getElementById('tabela-relatorio');
-      if (historico.length === 0) {
+      if (!historico.length) {
         tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400">Nenhum registro encontrado.</td></tr>';
         return;
       }
