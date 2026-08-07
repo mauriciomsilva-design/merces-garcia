@@ -1,6 +1,8 @@
-// ✅ DEPOIS (Sem aviso)
 {
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api" }
+    {
+      "source": "/api/(.*)",
+      "destination": "/api"
+    }
   ]
 }
