@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Mercês Garcia — Controle de Entrada e Merenda</title>
+  <meta name="theme-color" content="#1e293b" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Mercês Garcia" />
+  
+  <link id="app-favicon" rel="icon" href="" type="image/png" />
+  <link id="app-apple-icon" rel="apple-touch-icon" href="" />
+  <link id="app-manifest" rel="manifest" href="" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    body { 
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .custom-scroll::-webkit-scrollbar { width: 6px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col md:flex-row" oncontextmenu="return false;">
+
+  <!-- SIDEBAR -->
+  <aside class="w-full md:w-64 bg-slate-900 text-white flex-shrink-0 flex flex-col justify-between shadow-xl">
+    <div>
+      <div class="p-5 border-b border-slate-800 flex items-center gap-3">
+        <div id="sidebar-icon-box" class="w-10 h-10 rounded-xl bg-amber-500 overflow-hidden flex items-center justify-center text-slate-950 font-bold text-lg flex-shrink-0 border border-amber-400 shadow-sm">
+          <i id="sidebar-hat-icon" class="fa-solid fa-graduation-cap text-xl"></i>
+          <img id="sidebar-app-icon" src="" alt="Logo" class="w-full h-full object-cover hidden" />
+        </div>
+        <div>
+          <h1 class="font-bold text-sm text-white leading-tight">Mercês Garcia</h1>
+          <p class="text-xs text-slate-400">Controle de Entrada e Merenda</p>
+        </div>
+      </div>
+
+      <nav class="p-3 space-y-1">
+        <button onclick="mudarAba('painel')" id="nav-painel" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition bg-amber-500 text-slate-950 shadow-md">
+          <i class="fa-solid fa-border-all w-5"></i> Painel
+        </button>
+        <button onclick="mudarAba('scanner')" id="nav-scanner" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-slate-400 hover:bg-slate-800 hover:text-white">
+          <i class="fa-solid fa-qrcode w-5"></i> Leitor QR
+        </button>
+        <button onclick="mudarAba('alunos')" id="nav-alunos" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-slate-400 hover:bg-slate-800 hover:text-white">
+          <i class="fa-solid fa-users w-5"></i> Alunos
+        </button>
+        <button onclick="mudarAba('relatorios')" id="nav-relatorios" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-slate-400 hover:bg-slate-800 hover:text-white">
+          <i class="fa-solid fa-chart-pie w-5"></i> Relatórios
+        </button>
+        <button onclick="mudarAba('config')" id="nav-config" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-slate-400 hover:bg-slate-800 hover:text-white">
+          <i class="fa-solid fa-image w-5"></i> Logo / Foto do App
+        </button>
+      </nav>
+    </div>
+  </aside>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="flex-1 p-4 md:p-8 overflow-y-auto custom-scroll">
+    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+      <div class="flex items-center gap-3">
+        <div id="header-icon-box" class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center text-slate-950 font-bold text-lg border border-amber-400 shadow-sm overflow-hidden flex-shrink-0">
+          <i id="header-hat-icon" class="fa-solid fa-graduation-cap"></i>
+          <img id="header-app-icon" src="" class="w-full h-full object-cover hidden" alt="Logo" />
+        </div>
+        <div>
+          <h2 id="titulo-pagina" class="text-2xl font-bold text-slate-900">Mercês Garcia — Controle de Entrada e Merenda</h2>
+          <p id="data-atual" class="text-xs font-medium text-slate-500 capitalize"></p>
+        </div>
+      </div>
+
+      <span id="badge-status" class="px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Banco PostgreSQL Conectado
+      </span>
+    </header>
+
+    <!-- ABA 1: PAINEL -->
+    <section id="aba-painel" class="space-y-8">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-gradient-to-br from-slate-800 to-slate-900 text-white p-5 rounded-2xl shadow-sm border border-slate-700">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Chegadas Hoje</span>
+          <div class="my-3"><span id="metric-hoje" class="text-4xl font-extrabold">0</span></div>
+          <span class="text-xs text-slate-400">alunos presentes</span>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+          <span class="text-xs font-bold uppercase tracking-wider text-amber-600"><i class="fa-solid fa-mug-saucer mr-1"></i> Café da Manhã Hoje</span>
+          <div class="my-3"><span id="metric-cafe" class="text-4xl font-extrabold text-slate-800">0</span></div>
+          <span class="text-xs text-slate-400">refeições solicitadas</span>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+          <span class="text-xs font-bold uppercase tracking-wider text-emerald-600"><i class="fa-solid fa-utensils mr-1"></i> Almoço Hoje</span>
+          <div class="my-3"><span id="metric-almoco" class="text-4xl font-extrabold text-slate-800">0</span></div>
+          <span class="text-xs text-slate-400">refeições solicitadas</span>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Alunos</span>
+          <div class="my-3"><span id="metric-alunos" class="text-4xl font-extrabold text-slate-800">0</span></div>
+          <span class="text-xs text-slate-400">cadastrados no banco</span>
+        </div>
+      </div>
+
+      <!-- REGISTRO MANUAL -->
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <h3 class="font-bold text-slate-800 text-base mb-1">Registrar Entrada Manual / Refeição</h3>
+        <p class="text-xs text-slate-500 mb-4">Selecione o aluno e marque as refeições solicitadas.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Selecione o Aluno</label>
+            <select id="painel-aluno-select" onchange="carregarOpcoesAlunoPainel()" class="w-full p-3 border border-slate-200 rounded-xl text-xs bg-slate-50">
+              <option value="">-- Carregando Alunos... --</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-6 bg-slate-50 p-3 rounded-xl border border-slate-200 h-[46px]">
+            <label class="flex items-center gap-2 text-xs font-semibold text-amber-700 cursor-pointer">
+              <input type="checkbox" id="painel-cafe" class="w-4 h-4 accent-amber-500"> Café da Manhã
+            </label>
+            <label class="flex items-center gap-2 text-xs font-semibold text-emerald-700 cursor-pointer">
+              <input type="checkbox" id="painel-almoco" class="w-4 h-4 accent-emerald-500"> Almoço
+            </label>
+          </div>
+
+          <button onclick="confirmarEntradaPainel()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 px-4 rounded-xl text-xs transition flex items-center justify-center gap-2 cursor-pointer">
+            <i class="fa-solid fa-check-circle text-amber-400"></i> Confirmar Registro
+          </button>
+        </div>
+      </div>
+
+      <!-- CHEGADAS RECENTES -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+          <h3 class="font-bold text-slate-800 text-base">Chegadas Recentes (Hoje)</h3>
+        </div>
+        <div class="divide-y divide-slate-100" id="lista-recentes"></div>
+      </div>
+    </section>
+
+    <!-- ABA 2: SCANNER -->
+    <section id="aba-scanner" class="hidden space-y-6">
+      <div class="max-w-xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-slate-200 text-center">
+        <h3 class="font-bold text-lg text-slate-800 mb-1">Leitor de Carteirinha QR Code</h3>
+        <p class="text-xs text-slate-500 mb-4">Aponte o código para a câmera.</p>
+        <div class="relative overflow-hidden rounded-2xl border-2 border-slate-900 bg-slate-950 max-w-sm mx-auto shadow-inner">
+          <div id="reader" class="w-full"></div>
+        </div>
+      </div>
+
+      <div id="card-ultimo-lido" class="hidden max-w-xl mx-auto bg-slate-900 text-white p-6 rounded-2xl shadow-xl">
+        <div class="flex items-center gap-4 mb-4 pb-4 border-b border-slate-800">
+          <div id="ultimo-avatar" class="w-12 h-12 rounded-full bg-amber-500 text-slate-950 font-bold flex items-center justify-center">--</div>
+          <div>
+            <h4 id="ultimo-nome" class="font-bold text-white text-lg">--</h4>
+            <p id="ultimo-detalhes" class="text-xs text-slate-400">--</p>
+          </div>
+        </div>
+
+        <div class="bg-slate-800 p-4 rounded-xl mb-5 border border-slate-700">
+          <span class="block text-xs font-bold text-amber-400 mb-3">Selecione as refeições para hoje:</span>
+          <div class="flex gap-6">
+            <label class="flex items-center gap-2 text-xs font-semibold text-amber-300 cursor-pointer">
+              <input type="checkbox" id="presenca-cafe" class="w-4 h-4 accent-amber-500"> Café da Manhã
+            </label>
+            <label class="flex items-center gap-2 text-xs font-semibold text-emerald-300 cursor-pointer">
+              <input type="checkbox" id="presenca-almoco" class="w-4 h-4 accent-emerald-500"> Almoço
+            </label>
+          </div>
+        </div>
+
+        <div class="flex gap-3">
+          <button onclick="confirmarEntradaAlunoQR()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold text-xs transition cursor-pointer">
+            Confirmar Registro
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABA 3: ALUNOS -->
+    <section id="aba-alunos" class="hidden space-y-6">
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <h3 class="font-bold text-base text-slate-800 mb-4">Cadastrar Novo Aluno</h3>
+        <form id="form-aluno" onsubmit="cadastrarAluno(event)" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <input type="text" id="cad-nome" placeholder="Nome Completo" required class="p-3 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500">
+          <input type="text" id="cad-turma" placeholder="Turma (Ex: 3º MSI)" required class="p-3 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500">
+          <input type="text" id="cad-telefone" placeholder="WhatsApp (Ex: 61999998888)" required class="p-3 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500">
+          <input type="text" id="cad-qrcode" placeholder="Código QR Único" required class="p-3 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500">
+
+          <div class="lg:col-span-4 flex items-center gap-6 bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <span class="text-xs font-bold text-slate-700">Refeições Padrão:</span>
+            <label class="flex items-center gap-2 text-xs text-slate-700 cursor-pointer"><input type="checkbox" id="cad-cafe"> Café da Manhã</label>
+            <label class="flex items-center gap-2 text-xs text-slate-700 cursor-pointer"><input type="checkbox" id="cad-almoco"> Almoço</label>
+          </div>
+
+          <button type="submit" class="lg:col-span-4 bg-slate-900 text-white p-3 rounded-xl font-bold text-xs hover:bg-slate-800 cursor-pointer">
+            Salvar no Banco de Dados
+          </button>
+        </form>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-5 border-b border-slate-100">
+          <h3 class="font-bold text-slate-800 text-base">Alunos Cadastrados</h3>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 border-b text-slate-500 uppercase">
+              <tr>
+                <th class="p-4">Aluno</th>
+                <th class="p-4">Turma</th>
+                <th class="p-4">WhatsApp</th>
+                <th class="p-4">QR Code</th>
+                <th class="p-4 text-right">Ação</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-alunos" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABA 4: RELATÓRIOS -->
+    <section id="aba-relatorios" class="hidden space-y-6">
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex justify-between items-center">
+        <div>
+          <h3 class="font-bold text-base text-slate-800">Relatório Geral de Refeições</h3>
+        </div>
+        <button onclick="exportarCSV()" class="bg-emerald-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs hover:bg-emerald-700 cursor-pointer">
+          <i class="fa-solid fa-file-excel mr-1"></i> Exportar CSV (Excel)
+        </button>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 border-b text-slate-500 uppercase">
+              <tr>
+                <th class="p-4">Data</th>
+                <th class="p-4">Hora</th>
+                <th class="p-4">Aluno</th>
+                <th class="p-4">Turma</th>
+                <th class="p-4 text-center">Café</th>
+                <th class="p-4 text-center">Almoço</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-relatorio" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABA 5: LOGO -->
+    <section id="aba-config" class="hidden space-y-6">
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 max-w-xl mx-auto text-center">
+        <h3 class="font-bold text-base text-slate-800 mb-2">Logotipo Personalizado do App</h3>
+        <div class="flex flex-col items-center gap-4 p-6 bg-slate-50 border-2 border-dashed border-amber-300 rounded-2xl">
+          <div id="preview-icon-box" class="w-24 h-24 rounded-2xl bg-amber-500 flex items-center justify-center text-slate-950 font-bold text-3xl border-2 border-amber-400 overflow-hidden">
+            <i id="preview-hat-icon" class="fa-solid fa-graduation-cap"></i>
+            <img id="preview-app-icon" src="" class="w-full h-full object-cover hidden" />
+          </div>
+          <label class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer">
+            Selecionar Nova Foto
+            <input type="file" id="input-foto-app" accept="image/*" class="hidden" onchange="salvarFotoApp(event)">
+          </label>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    let alunos = [];
+    let historico = [];
+    let html5QrCode = null;
+    let alunoEmProcessamento = null;
+
+    document.getElementById('data-atual').innerText = new Date().toLocaleDateString('pt-BR', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      carregarTudo();
+    });
+
+    async function carregarTudo() {
+      await Promise.all([carregarAlunos(), carregarHistorico(), carregarFotoApp()]);
+      atualizarDashboard();
+    }
+
+    async function carregarAlunos() {
+      try {
+        const res = await fetch('/api/alunos');
+        alunos = await res.json();
+        atualizarTabelaAlunos();
+        atualizarSelectAlunosPainel();
+      } catch (e) {}
+    }
+
+    async function carregarHistorico() {
+      try {
+        const res = await fetch('/api/historico');
+        historico = await res.json();
+        atualizarDashboard();
+        if (!document.getElementById('aba-relatorios').classList.contains('hidden')) {
+          gerarRelatorio();
+        }
+      } catch (e) {}
+    }
+
+    async function carregarFotoApp() {
+      try {
+        const res = await fetch('/api/config/foto');
+        const data = await res.json();
+        if (data.foto) aplicarFotoApp(data.foto);
+      } catch (e) {}
+    }
+
+    function aplicarFotoApp(foto) {
+      if (!foto) return;
+      ['sidebar-app-icon', 'header-app-icon', 'preview-app-icon'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.src = foto; el.classList.remove('hidden'); }
+      });
+      ['sidebar-hat-icon', 'header-hat-icon', 'preview-hat-icon'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+      });
+    }
+
+    async function salvarFotoApp(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = async function(evt) {
+          const base64 = evt.target.result;
+          await fetch('/api/config/foto', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ foto: base64 })
+          });
+          aplicarFotoApp(base64);
+          alert('Foto atualizada com sucesso!');
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    async function cadastrarAluno(e) {
+      e.preventDefault();
+      const body = {
+        nome: document.getElementById('cad-nome').value.trim(),
+        turma: document.getElementById('cad-turma').value.trim(),
+        fone: document.getElementById('cad-telefone').value.trim(),
+        qrcode: document.getElementById('cad-qrcode').value.trim(),
+        cafe: document.getElementById('cad-cafe').checked,
+        almoco: document.getElementById('cad-almoco').checked
+      };
+
+      const res = await fetch('/api/alunos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      if (res.ok) {
+        alert('Aluno gravado no banco com sucesso!');
+        document.getElementById('form-aluno').reset();
+        await carregarAlunos();
+      } else {
+        alert('Erro ao cadastrar. Verifique se o QR Code já existe.');
+      }
+    }
+
+    async function excluirAluno(id) {
+      if (confirm('Deseja excluir este aluno do banco?')) {
+        await fetch(`/api/alunos/${id}`, { method: 'DELETE' });
+        await carregarAlunos();
+      }
+    }
+
+    function atualizarTabelaAlunos() {
+      const tbody = document.getElementById('tabela-alunos');
+      if (alunos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400">Nenhum aluno cadastrado.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = alunos.map(a => `
+        <tr class="hover:bg-slate-50">
+          <td class="p-4 font-bold text-slate-800">${a.nome}</td>
+          <td class="p-4 text-slate-600">${a.turma}</td>
+          <td class="p-4 text-slate-600">${a.fone}</td>
+          <td class="p-4 text-slate-600 font-mono text-[11px]">${a.qrcode}</td>
+          <td class="p-4 text-right">
+            <button onclick="excluirAluno('${a.id}')" class="text-red-500 hover:text-red-700 font-bold cursor-pointer">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function atualizarSelectAlunosPainel() {
+      const select = document.getElementById('painel-aluno-select');
+      select.innerHTML = '<option value="">-- Escolha um Aluno --</option>' +
+        alunos.map(a => `<option value="${a.id}">${a.nome} (${a.turma})</option>`).join('');
+    }
+
+    function carregarOpcoesAlunoPainel() {
+      const id = document.getElementById('painel-aluno-select').value;
+      const a = alunos.find(x => x.id === id);
+      if (a) {
+        document.getElementById('painel-cafe').checked = a.cafe;
+        document.getElementById('painel-almoco').checked = a.almoco;
+      }
+    }
+
+    async function confirmarEntradaPainel() {
+      const id = document.getElementById('painel-aluno-select').value;
+      const aluno = alunos.find(a => a.id === id);
+      if (!aluno) return alert('Selecione um aluno');
+
+      await salvarEntradaBanco({
+        alunoId: aluno.id,
+        nome: aluno.nome,
+        turma: aluno.turma,
+        fone: aluno.fone,
+        qrcode: aluno.qrcode,
+        cafe: document.getElementById('painel-cafe').checked,
+        almoco: document.getElementById('painel-almoco').checked
+      });
+
+      document.getElementById('painel-aluno-select').value = "";
+      alert('Entrada registrada com sucesso!');
+    }
+
+    async function salvarEntradaBanco(dados) {
+      await fetch('/api/historico', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dados)
+      });
+      await carregarHistorico();
+    }
+
+    function atualizarDashboard() {
+      const hojeStr = new Date().toLocaleDateString('pt-BR');
+      const hoje = historico.filter(h => h.data === hojeStr);
+
+      document.getElementById('metric-hoje').innerText = hoje.length;
+      document.getElementById('metric-cafe').innerText = hoje.filter(h => h.cafe).length;
+      document.getElementById('metric-almoco').innerText = hoje.filter(h => h.almoco).length;
+      document.getElementById('metric-alunos').innerText = alunos.length;
+
+      const container = document.getElementById('lista-recentes');
+      if (hoje.length === 0) {
+        container.innerHTML = '<div class="p-4 text-center text-xs text-slate-400">Nenhum registro hoje.</div>';
+        return;
+      }
+
+      container.innerHTML = hoje.map(r => `
+        <div class="p-4 flex items-center justify-between">
+          <div>
+            <p class="font-bold text-slate-800 text-xs">${r.nome}</p>
+            <p class="text-[11px] text-slate-500">${r.turma} • Chegada às ${r.hora}</p>
+          </div>
+          <div class="flex gap-2">
+            ${r.cafe ? '<span class="px-2 py-1 bg-amber-100 text-amber-800 text-[10px] font-bold rounded">Café</span>' : ''}
+            ${r.almoco ? '<span class="px-2 py-1 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded">Almoço</span>' : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function mudarAba(aba) {
+      ['painel', 'scanner', 'alunos', 'relatorios', 'config'].forEach(a => {
+        document.getElementById(`aba-${a}`).classList.add('hidden');
+        document.getElementById(`nav-${a}`).className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-slate-400 hover:bg-slate-800 hover:text-white";
+      });
+
+      document.getElementById(`aba-${aba}`).classList.remove('hidden');
+      document.getElementById(`nav-${aba}`).className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition bg-amber-500 text-slate-950 shadow-md";
+
+      if (aba === 'scanner') iniciarCamera();
+      else sePararCamera();
+
+      if (aba === 'relatorios') gerarRelatorio();
+    }
+
+    function iniciarCamera() {
+      if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+      html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (codigo) => {
+          html5QrCode.pause();
+          processarQRCode(codigo);
+        },
+        () => {}
+      ).catch(() => {});
+    }
+
+    function sePararCamera() {
+      if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().then(() => html5QrCode.clear()).catch(() => {});
+      }
+    }
+
+    function processarQRCode(codigo) {
+      const aluno = alunos.find(a => a.qrcode.toLowerCase() === codigo.trim().toLowerCase());
+      if (!aluno) {
+        alert('Aluno não cadastrado no banco!');
+        html5QrCode.resume();
+        return;
+      }
+      alunoEmProcessamento = aluno;
+      document.getElementById('ultimo-nome').innerText = aluno.nome;
+      document.getElementById('ultimo-detalhes').innerText = `${aluno.turma} • QR: ${aluno.qrcode}`;
+      document.getElementById('presenca-cafe').checked = aluno.cafe;
+      document.getElementById('presenca-almoco').checked = aluno.almoco;
+      document.getElementById('card-ultimo-lido').classList.remove('hidden');
+    }
+
+    async function confirmarEntradaAlunoQR() {
+      if (!alunoEmProcessamento) return;
+      await salvarEntradaBanco({
+        alunoId: alunoEmProcessamento.id,
+        nome: alunoEmProcessamento.nome,
+        turma: alunoEmProcessamento.turma,
+        fone: alunoEmProcessamento.fone,
+        qrcode: alunoEmProcessamento.qrcode,
+        cafe: document.getElementById('presenca-cafe').checked,
+        almoco: document.getElementById('presenca-almoco').checked
+      });
+      document.getElementById('card-ultimo-lido').classList.add('hidden');
+      alunoEmProcessamento = null;
+      if (html5QrCode) html5QrCode.resume();
+      alert('Entrada registrada com sucesso!');
+    }
+
+    function gerarRelatorio() {
+      const tbody = document.getElementById('tabela-relatorio');
+      if (historico.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400">Nenhum registro encontrado.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = historico.map(r => `
+        <tr class="hover:bg-slate-50">
+          <td class="p-4 font-semibold">${r.data}</td>
+          <td class="p-4">${r.hora}</td>
+          <td class="p-4 font-bold">${r.nome}</td>
+          <td class="p-4">${r.turma}</td>
+          <td class="p-4 text-center">${r.cafe ? '✔' : '-'}</td>
+          <td class="p-4 text-center">${r.almoco ? '✔' : '-'}</td>
+        </tr>
+      `).join('');
+    }
+
+    function exportarCSV() {
+      let csv = '\uFEFFData;Hora;Aluno;Turma;Café;Almoço\n';
+      historico.forEach(r => {
+        csv += `"${r.data}";"${r.hora}";"${r.nome}";"${r.turma}";"${r.cafe ? 'Sim' : 'Não'}";"${r.almoco ? 'Sim' : 'Não'}"\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `relatorio_merenda.csv`;
+      link.click();
+    }
+  </script>
+</body>
+</html>
