@@ -80,7 +80,7 @@
       </div>
 
       <span id="badge-status" class="px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1.5">
-        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Banco PostgreSQL Conectado
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Banco Neon Conectado
       </span>
     </header>
 
@@ -195,7 +195,7 @@
         <form id="form-aluno" onsubmit="cadastrarAluno(event)" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <input type="text" id="cad-nome" placeholder="Nome Completo" required class="p-3 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500">
           <input type="text" id="cad-turma" placeholder="Turma (Ex: 3º MSI)" required class="p-3 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500">
-          <input type="text" id="cad-telefone" placeholder="WhatsApp (Ex: 61999998888)" required class="p-3 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500">
+          <input type="text" id="cad-telefone" placeholder="WhatsApp (Ex: 61999998888)" class="p-3 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500">
           <input type="text" id="cad-qrcode" placeholder="Código QR Único" required class="p-3 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500">
 
           <div class="lg:col-span-4 flex items-center gap-6 bg-slate-50 p-3 rounded-xl border border-slate-200">
@@ -280,6 +280,12 @@
   </main>
 
   <script>
+    // Se a aplicação estiver publicada na Vercel, usa a própria URL do domínio publicado.
+    // Se estiver em arquivo local file://, tenta apontar para o servidor backend local.
+    const API_BASE_URL = window.location.protocol.startsWith('http')
+      ? window.location.origin 
+      : 'http://localhost:3000';
+
     let alunos = [];
     let historico = [];
     let html5QrCode = null;
@@ -301,7 +307,7 @@
 
     async function carregarAlunos() {
       try {
-        const res = await fetch('/api/alunos');
+        const res = await fetch(`${API_BASE_URL}/api/alunos`);
         if (res.ok) {
           alunos = await res.json();
           atualizarTabelaAlunos();
@@ -314,7 +320,7 @@
 
     async function carregarFotoApp() {
       try {
-        const res = await fetch('/api/config/foto');
+        const res = await fetch(`${API_BASE_URL}/api/config/foto`);
         if (res.ok) {
           const data = await res.json();
           if (data && data.foto) aplicarFotoApp(data.foto);
@@ -340,13 +346,17 @@
         const reader = new FileReader();
         reader.onload = async function(evt) {
           const base64 = evt.target.result;
-          await fetch('/api/config/foto', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ foto: base64 })
-          });
-          aplicarFotoApp(base64);
-          alert('Foto atualizada com sucesso!');
+          try {
+            await fetch(`${API_BASE_URL}/api/config/foto`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ foto: base64 })
+            });
+            aplicarFotoApp(base64);
+            alert('Foto atualizada com sucesso!');
+          } catch (err) {
+            alert('Erro ao salvar a foto no servidor.');
+          }
         };
         reader.readAsDataURL(file);
       }
@@ -354,17 +364,26 @@
 
     async function cadastrarAluno(e) {
       e.preventDefault();
+      
+      const qrcodeLimpo = document.getElementById('cad-qrcode').value.trim();
+      const nomeLimpo = document.getElementById('cad-nome').value.trim();
+
+      if (!qrcodeLimpo || !nomeLimpo) {
+        alert("Preencha o Nome e o QR Code do aluno.");
+        return;
+      }
+
       const body = {
-        nome: document.getElementById('cad-nome').value.trim(),
+        nome: nomeLimpo,
         turma: document.getElementById('cad-turma').value.trim(),
-        fone: document.getElementById('cad-telefone').value.trim(),
-        qrcode: document.getElementById('cad-qrcode').value.trim(),
+        fone: document.getElementById('cad-telefone') ? document.getElementById('cad-telefone').value.trim() : '',
+        qrcode: qrcodeLimpo,
         cafe: document.getElementById('cad-cafe').checked,
         almoco: document.getElementById('cad-almoco').checked
       };
 
       try {
-        const res = await fetch('/api/alunos', {
+        const res = await fetch(`${API_BASE_URL}/api/alunos`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body)
@@ -377,17 +396,22 @@
           document.getElementById('form-aluno').reset();
           await carregarAlunos();
         } else {
-          alert(data.error || 'Erro ao cadastrar aluno.');
+          alert(data.error || data.mensagem || 'Erro ao cadastrar aluno.');
         }
       } catch (err) {
-        alert('Erro de conexão ao tentar salvar o aluno.');
+        console.error('Erro detalhado:', err);
+        alert(`Erro de conexão com o banco ou servidor (${API_BASE_URL}). Verifique a Vercel.`);
       }
     }
 
     async function excluirAluno(id) {
       if (confirm('Deseja excluir este aluno do banco?')) {
-        await fetch(`/api/alunos/${id}`, { method: 'DELETE' });
-        await carregarAlunos();
+        try {
+          await fetch(`${API_BASE_URL}/api/alunos/${id}`, { method: 'DELETE' });
+          await carregarAlunos();
+        } catch (err) {
+          alert('Erro ao excluir aluno do banco.');
+        }
       }
     }
 
@@ -444,7 +468,7 @@
 
     async function salvarEntradaBanco(dados) {
       try {
-        const res = await fetch('/api/presenca', {
+        const res = await fetch(`${API_BASE_URL}/api/presenca`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(dados)
