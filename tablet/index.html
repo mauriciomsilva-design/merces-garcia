@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#111827">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Mercês Garcia">
+  <link rel="manifest" href="/tablet/manifest.webmanifest">
+  <title>Mercês Garcia — Tablet</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:radial-gradient(circle at top,#24335f,#0b1020 55%);color:#fff;display:flex;align-items:center;justify-content:center;padding:24px}.app{width:min(720px,100%)}.brand{display:flex;align-items:center;gap:14px;margin-bottom:26px}.logo{width:54px;height:54px;border-radius:16px;display:grid;place-items:center;background:linear-gradient(135deg,#7c3aed,#06b6d4);font-size:28px;box-shadow:0 15px 40px #0005}.brand h1{margin:0;font-size:25px}.brand p{margin:4px 0 0;color:#aab4cc}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}.card{border:1px solid #ffffff18;background:#111827dd;border-radius:24px;padding:24px;text-decoration:none;color:#fff;min-height:170px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 20px 50px #0004;transition:.2s}.card:active{transform:scale(.98)}.icon{font-size:38px}.title{font-size:21px;font-weight:750}.desc{color:#aab4cc;font-size:14px;margin-top:5px}.status{margin-top:18px;padding:13px 16px;border-radius:16px;background:#0f172acc;color:#b9c4da;font-size:13px;text-align:center}.install{display:none;margin-top:12px;width:100%;padding:14px;border:0;border-radius:14px;background:#fff;color:#111827;font-weight:700;font-size:15px}@media(max-width:560px){.grid{grid-template-columns:1fr}.card{min-height:145px}}
+  </style>
+</head>
+<body>
+<main class="app">
+  <div class="brand"><div class="logo">MG</div><div><h1>Mercês Garcia</h1><p>Aplicativo para tablet • rede local</p></div></div>
+  <section class="grid">
+    <a class="card" id="presenca" href="/"><div class="icon">👥</div><div><div class="title">Presença</div><div class="desc">Abrir sistema de presença</div></div></a>
+    <a class="card" id="biblioteca" href="#"><div class="icon">📚</div><div><div class="title">Biblioteca</div><div class="desc">Abrir sistema da biblioteca</div></div></a>
+  </section>
+  <button class="install" id="install">＋ Instalar aplicativo</button>
+  <div class="status" id="status">Conectado ao servidor local: verificando…</div>
+</main>
+<script>
+const host=location.hostname; document.getElementById('biblioteca').href=`http://${host}:3001`;
+document.getElementById('status').textContent=`Servidor: ${host}:3000 • Biblioteca: ${host}:3001`;
+let deferredPrompt; const btn=document.getElementById('install');
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;btn.style.display='block'});
+btn.addEventListener('click',async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();deferredPrompt=null;btn.style.display='none'});
+if('serviceWorker' in navigator) navigator.serviceWorker.register('/tablet/sw.js');
+</script>
+</body>
+</html>
