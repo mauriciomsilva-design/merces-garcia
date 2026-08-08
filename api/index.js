@@ -3,8 +3,26 @@ const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
-const PRODUCTION_ORIGIN = process.env.APP_ORIGIN || 'https://merces-garcia.vercel.app';
-const ALLOWED_ORIGINS = new Set([PRODUCTION_ORIGIN, 'http://localhost:3000', 'http://127.0.0.1:3000']);
+
+function normalizeOrigin(value) {
+  if (!value) return null;
+  try {
+    return new URL(value.startsWith('http') ? value : `https://${value}`).origin;
+  } catch (_) {
+    return null;
+  }
+}
+
+// Keep the allowlist explicit. APP_ORIGIN should be set in Vercel for the
+// production domain; the two known project domains are kept for compatibility.
+const ALLOWED_ORIGINS = new Set([
+  normalizeOrigin(process.env.APP_ORIGIN),
+  normalizeOrigin(process.env.VERCEL_PROJECT_PRODUCTION_URL),
+  'https://merces-garcia.vercel.app',
+  'https://merces-garcia-1.vercel.app',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000'
+].filter(Boolean));
 
 app.disable('x-powered-by');
 
@@ -48,16 +66,17 @@ function rateLimit(req, res, next) {
 app.use(rateLimit);
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// New Supabase secret keys are preferred; keep service_role as a compatibility fallback.
+const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 function getSupabase() {
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+  if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) {
     const error = new Error('Supabase environment is not configured');
     error.code = 'CONFIG_MISSING';
     throw error;
   }
-  return createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-    auth: { autoRefreshToken: false, persistSession: false }
+  return createClient(SUPABASE_URL, SUPABASE_SECRET_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false }
   });
 }
 
