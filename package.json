@@ -1,6 +1,6 @@
 {
   "name": "merces-garcia",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "private": true,
   "main": "desktop/main.js",
   "scripts": {
@@ -8,9 +8,11 @@
     "start:local": "node server-local.js",
     "start:presenca:rede": "set HOST=0.0.0.0&& node server-local.js",
     "start:biblioteca": "node biblioteca/server.js",
-    "start:biblioteca:rede": "set BIBLIOTECA_HOST=0.0.0.0&& node biblioteca/server.js",
+    "start:biblioteca:rede": "node scripts/biblioteca-rede.js",
     "desktop:biblioteca": "electron desktop/main.js",
-    "build:windows": "electron-builder --win nsis --x64"
+    "build:windows": "electron-builder --win nsis --x64",
+    "backup": "scripts\\backup-sqlite.bat",
+    "iniciar": "scripts\\iniciar-sistemas.bat"
   },
   "engines": {
     "node": ">=22.5.0"
@@ -25,10 +27,10 @@
     "electron-builder": "^26.0.12"
   },
   "build": {
-    "appId": "br.mercesgarcia.biblioteca",
-    "productName": "Biblioteca Mercês Garcia",
+    "appId": "br.mercesgarcia.local",
+    "productName": "Mercês Garcia - Sistemas Locais",
     "directories": { "output": "dist" },
-    "files": ["biblioteca/**/*", "desktop/**/*", "public/**/*", "api/**/*", "server-local.js", "package.json", "node_modules/**/*"],
+    "files": ["biblioteca/**/*", "desktop/**/*", "public/**/*", "api/**/*", "scripts/**/*", "server-local.js", "package.json", "node_modules/**/*"],
     "win": { "target": [{ "target": "nsis", "arch": ["x64"] }] },
     "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true, "createStartMenuShortcut": true }
   }
