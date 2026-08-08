@@ -1,0 +1,12 @@
+{
+  "name": "Mercês Garcia",
+  "short_name": "Mercês Garcia",
+  "start_url": "/tablet/",
+  "scope": "/tablet/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b1020",
+  "theme_color": "#111827",
+  "description": "Aplicativo local para Presença e Biblioteca na rede do Mercês Garcia",
+  "icons": []
+}
