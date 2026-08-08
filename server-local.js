@@ -7,6 +7,8 @@ const app = express();
 app.disable('x-powered-by');
 app.use(express.json({ limit: '3mb' }));
 app.use('/api', localApi);
+app.use('/tablet', express.static(path.join(__dirname, 'tablet')));
+app.get('/tablet', (req, res) => res.sendFile(path.join(__dirname, 'tablet', 'index.html')));
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
@@ -29,6 +31,8 @@ app.listen(PORT, HOST, () => {
     console.log('Acesso pela rede local:');
     for (const url of networkUrls()) console.log(`  ${url}`);
     if (!networkUrls().length) console.log('  Nenhum endereço IPv4 de rede foi encontrado.');
+    console.log('App para tablet:');
+    for (const url of networkUrls()) console.log(`  ${url}/tablet/`);
   }
   console.log('Banco: data/merces-garcia.sqlite');
 });
