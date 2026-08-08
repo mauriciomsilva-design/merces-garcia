@@ -1,12 +1,15 @@
 {
   "name": "merces-garcia",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "main": "api/index.js",
   "scripts": {
     "start": "node api/index.js",
     "start:local": "node server-local.js",
-    "start:biblioteca": "node biblioteca/server.js"
+    "start:biblioteca": "node biblioteca/server.js",
+    "start:biblioteca:rede": "set BIBLIOTECA_HOST=0.0.0.0&& node biblioteca/server.js",
+    "desktop:biblioteca": "electron desktop/main.js",
+    "build:windows": "electron-builder --win nsis --x64"
   },
   "engines": {
     "node": ">=22.5.0"
@@ -15,5 +18,9 @@
     "@supabase/supabase-js": "^2.57.0",
     "cors": "^2.8.6",
     "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "electron": "^37.2.6",
+    "electron-builder": "^26.0.12"
   }
 }
