@@ -2,7 +2,7 @@
   "name": "merces-garcia",
   "version": "1.2.0",
   "private": true,
-  "main": "api/index.js",
+  "main": "desktop/main.js",
   "scripts": {
     "start": "node api/index.js",
     "start:local": "node server-local.js",
@@ -22,5 +22,13 @@
   "devDependencies": {
     "electron": "^37.2.6",
     "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "br.mercesgarcia.biblioteca",
+    "productName": "Biblioteca Mercês Garcia",
+    "directories": { "output": "dist" },
+    "files": ["biblioteca/**/*", "desktop/**/*", "package.json", "node_modules/**/*"],
+    "win": { "target": [{ "target": "nsis", "arch": ["x64"] }] },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true, "createStartMenuShortcut": true }
   }
 }
