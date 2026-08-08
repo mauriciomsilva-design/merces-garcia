@@ -324,8 +324,11 @@
     });
 
     async function carregarTudo() {
-      await carregarAlunos();
-      await carregarFotoApp();
+      await Promise.all([
+        carregarAlunos(),
+        carregarHistorico(),
+        carregarFotoApp()
+      ]);
       atualizarDashboard();
     }
 
@@ -360,6 +363,21 @@
       }
     }
 
+    async function carregarHistorico() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/historico`);
+        const data = await res.json().catch(() => []);
+        if (res.ok && Array.isArray(data)) {
+          historico = data;
+          atualizarDashboard();
+        } else {
+          console.error('Erro ao carregar histórico:', data);
+        }
+      } catch (e) {
+        console.error('Erro ao carregar histórico:', e);
+      }
+    }
+
     async function carregarFotoApp() {
       try {
         const res = await fetch(`${API_BASE_URL}/api/config/foto`);
@@ -389,14 +407,19 @@
         reader.onload = async function(evt) {
           const base64 = evt.target.result;
           try {
-            await fetch(`${API_BASE_URL}/api/config/foto`, {
+            const res = await fetch(`${API_BASE_URL}/api/config/foto`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ foto: base64 })
             });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+              throw new Error(data.error || data.detalhe || 'Falha ao salvar a foto.');
+            }
             aplicarFotoApp(base64);
             alert('Foto atualizada com sucesso!');
           } catch (err) {
+            console.error('Erro ao salvar foto:', err);
             alert('Erro ao salvar a foto no servidor.');
           }
         };
@@ -503,9 +526,12 @@
     async function excluirAluno(id) {
       if (confirm('Deseja excluir este aluno do banco?')) {
         try {
-          await fetch(`${API_BASE_URL}/api/alunos/${id}`, { method: 'DELETE' });
+          const res = await fetch(`${API_BASE_URL}/api/alunos/${id}`, { method: 'DELETE' });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data.error || data.detalhe || 'Falha ao excluir aluno.');
           await carregarAlunos();
         } catch (err) {
+          console.error('Erro ao excluir aluno:', err);
           alert('Erro ao excluir aluno do banco.');
         }
       }
@@ -576,11 +602,14 @@
           if (resData.historico) {
             historico.unshift(resData.historico);
             atualizarDashboard();
+          } else {
+            await carregarHistorico();
           }
         } else {
           alert(resData.error || 'Erro ao registrar entrada.');
         }
       } catch (err) {
+        console.error('Erro ao registrar entrada:', err);
         alert('Erro ao conectar com o servidor.');
       }
     }
@@ -644,10 +673,15 @@
       ).catch(() => {});
     }
 
-    function sePararCamera() {
-      if (html5QrCode && html5QrCode.isScanning) {
-        html5QrCode.stop().then(() => html5QrCode.clear()).catch(() => {});
+    async function sePararCamera() {
+      if (!html5QrCode) return;
+      try {
+        if (html5QrCode.isScanning) await html5QrCode.stop();
+        await html5QrCode.clear();
+      } catch (e) {
+        console.warn('Não foi possível encerrar o leitor:', e);
       }
+      html5QrCode = null;
     }
 
     function processarQRCode(codigo) {
