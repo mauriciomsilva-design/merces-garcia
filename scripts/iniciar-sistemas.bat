@@ -1,5 +1,5 @@
 @echo off
-setlocal EnableExtensions
+setlocal EnableExtensions EnableDelayedExpansion
 cd /d "%~dp0.."
 
 title Mercês Garcia - Servidor Local
@@ -37,18 +37,17 @@ if not errorlevel 1 (
   powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process PowerShell -Verb RunAs -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File ""%~dp0liberar-rede-windows.ps1""'" >nul 2>&1
 )
 
-echo.
-echo Iniciando Presenca e Biblioteca...
-echo.
+start "Merces Garcia - Backup automatico" cmd /c "cd /d "%~dp0.." && call scripts\backup-loop.bat"
 start "Merces Garcia - Presenca" cmd /k "cd /d "%~dp0.." && npm run start:presenca:rede"
 start "Merces Garcia - Biblioteca" cmd /k "cd /d "%~dp0.." && npm run start:biblioteca:rede"
 
 timeout /t 3 /nobreak >nul
 
+set "IP="
 for /f "tokens=2 delims=:" %%A in ('ipconfig ^| findstr /R /C:"IPv4.*:"') do (
-  set "IP=%%A"
-  set "IP=!IP: =!"
+  if not defined IP set "IP=%%A"
 )
+set "IP=!IP: =!"
 
 :menu
 cls
@@ -56,15 +55,23 @@ echo ================================================================
 echo          MERCES GARCIA - SERVIDOR LOCAL
  echo ================================================================
 echo.
-echo Presenca:   http://localhost:3000
- echo Biblioteca: http://localhost:3001
+echo COMPUTADOR:
+echo   Presenca:    http://localhost:3000
+ echo   Biblioteca:  http://localhost:3001
  echo.
-echo Para tablets, use o IP do computador:
-echo Presenca:   http://SEU-IP:3000
- echo Biblioteca: http://SEU-IP:3001
- echo.
-echo O banco fica somente neste computador.
+if defined IP (
+  echo TABLETS - mesma rede Wi-Fi:
+  echo   Presenca:    http://!IP!:3000
+  echo   Biblioteca:  http://!IP!:3001
+) else (
+  echo Nao foi possivel identificar o IP automaticamente.
+  echo Use ipconfig para consultar o IPv4 do computador.
+)
 echo.
+echo Banco de presenca: data\merces-garcia.sqlite
+ echo Banco biblioteca:  biblioteca\data\biblioteca.sqlite
+ echo Backups:           backups\
+ echo.
 echo [1] Abrir Presenca neste computador
  echo [2] Abrir Biblioteca neste computador
  echo [3] Fazer backup agora
