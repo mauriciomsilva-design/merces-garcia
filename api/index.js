@@ -46,6 +46,22 @@ app.get('/api/alunos', async (req, res) => {
   }
 });
 
+app.get('/api/historico', async (req, res) => {
+  try {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('historico')
+      .select('*')
+      .order('criado_em', { ascending: false });
+
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err) {
+    console.error('GET /api/historico:', err);
+    res.status(500).json({ error: 'Erro ao buscar histórico no Supabase.', detalhe: err.message });
+  }
+});
+
 app.post('/api/alunos', async (req, res) => {
   const nome = String(req.body.nome ?? '').trim();
   const turma = String(req.body.turma ?? '').trim();
