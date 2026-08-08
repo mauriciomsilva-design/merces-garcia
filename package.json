@@ -4,7 +4,11 @@
   "private": true,
   "main": "api/index.js",
   "scripts": {
-    "start": "node api/index.js"
+    "start": "node api/index.js",
+    "start:local": "node server-local.js"
+  },
+  "engines": {
+    "node": ">=22.5.0"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.0",
